@@ -13,7 +13,7 @@ Current features:
 
 1. **Clone the repository**
    ```
-   git clone https://github.com/yourusername/ResoApiTool.git
+   git clone https://github.com/DanteTucker/ResoApiTool.git
    cd ResoApiTool
    ```
 
