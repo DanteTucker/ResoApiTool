@@ -2,6 +2,12 @@
 
 A small console tool for searching and removing records and other useful functions.
 
+Current features:
+* Search for records by name or tag.
+* Interactive review of returned records with option to delete.
+* Function to remove excess RadiantDash Screens Records.
+* Review and delete Message Items.
+
 ## Building
 
 1. **Clone the repository**
