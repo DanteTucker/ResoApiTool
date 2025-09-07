@@ -7,6 +7,7 @@ Current features:
 * Interactive review of returned records with option to delete.
 * Function to remove excess RadiantDash Screens Records.
 * Review and delete Message Items.
+* Get Auth Token for outside use.
 
 ## Building
 
