@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
@@ -14,6 +15,57 @@ namespace ResoAPITool
         public string Path { get; set; } = string.Empty;
         public DateTime LastModificationTime { get; set; }
         public List<string> Tags { get; set; } = new List<string>();
+    }
+
+    public class UserProfile
+    {
+        [JsonProperty("iconUrl")]
+        public string? IconUrl { get; set; }
+
+        [JsonProperty("tagline")]
+        public string? Tagline { get; set; }
+
+        [JsonProperty("displayBadges")]
+        public List<string> DisplayBadges { get; set; } = new List<string>();
+
+        [JsonProperty("description")]
+        public string? Description { get; set; }
+    }
+
+    public class UserInfo
+    {
+        [JsonProperty("id")]
+        public string Id { get; set; } = string.Empty;
+
+        [JsonProperty("username")]
+        public string Username { get; set; } = string.Empty;
+
+        [JsonProperty("normalizedUsername")]
+        public string NormalizedUsername { get; set; } = string.Empty;
+
+        [JsonProperty("registrationDate")]
+        public DateTime RegistrationDate { get; set; }
+
+        [JsonProperty("isVerified")]
+        public bool IsVerified { get; set; }
+
+        [JsonProperty("isLocked")]
+        public bool IsLocked { get; set; }
+
+        [JsonProperty("supressBanEvasion")]
+        public bool SupressBanEvasion { get; set; }
+
+        [JsonProperty("2fa_login")]
+        public bool TwoFactorLogin { get; set; }
+
+        [JsonProperty("tags")]
+        public List<string> Tags { get; set; } = new List<string>();
+
+        [JsonProperty("profile")]
+        public UserProfile? Profile { get; set; }
+
+        [JsonProperty("isActiveSupporter")]
+        public bool IsActiveSupporter { get; set; }
     }
 
     public class ResoniteRecordService
@@ -159,6 +211,56 @@ namespace ResoAPITool
             foreach (var group in groupedByName)
             {
                 Console.WriteLine($"  {group.Key}: {group.Count()} record(s)");
+            }
+        }
+
+        public static async Task<UserProfile?> GetUserProfileAsync(AuthResponse auth)
+        {
+            using var httpClient = new HttpClient();
+            
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"res {auth.UserId}:{auth.Token}");
+            httpClient.DefaultRequestHeaders.Add("Accept", "application/json, text/plain, */*");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+
+            var response = await httpClient.GetAsync($"https://api.resonite.com/users/{auth.UserId}");
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Failed to get user info with status {response.StatusCode}: {responseContent}");
+            }
+
+            try
+            {
+                var userInfo = JsonConvert.DeserializeObject<UserInfo>(responseContent);
+                return userInfo?.Profile ?? new UserProfile();
+            }
+            catch (JsonException ex)
+            {
+                throw new Exception($"Failed to parse user info response. Response was: {responseContent}", ex);
+            }
+        }
+
+        public static async Task UpdateUserProfileAsync(AuthResponse auth, UserProfile profile)
+        {
+            using var httpClient = new HttpClient();
+            
+            httpClient.DefaultRequestHeaders.Add("Authorization", $"res {auth.UserId}:{auth.Token}");
+            httpClient.DefaultRequestHeaders.Add("Accept", "application/json, text/plain, */*");
+            httpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+
+            var json = JsonConvert.SerializeObject(profile, Formatting.None, new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore
+            });
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await httpClient.PutAsync($"https://api.resonite.com/users/{auth.UserId}/profile", content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new HttpRequestException($"Failed to update user profile with status {response.StatusCode}: {responseContent}");
             }
         }
     }

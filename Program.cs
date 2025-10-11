@@ -31,8 +31,9 @@ namespace ResoAPITool
                 Console.WriteLine("2. Review Message Items");
                 Console.WriteLine("3. Search Records");
                 Console.WriteLine("4. Display Auth Token");
-                Console.WriteLine("5. Exit");
-                Console.Write("\nSelect an option (1-5): ");
+                Console.WriteLine("5. Edit Profile");
+                Console.WriteLine("6. Exit");
+                Console.Write("\nSelect an option (1-6): ");
 
                 var input = Console.ReadLine()?.Trim();
                 
@@ -59,10 +60,15 @@ namespace ResoAPITool
                         Console.ReadKey();
                         break;
                     case "5":
+                        await EditProfileAsync(auth);
+                        Console.WriteLine("\nPress any key to return to main menu...");
+                        Console.ReadKey();
+                        break;
+                    case "6":
                         Console.WriteLine("Goodbye!");
                         return;
                     default:
-                        Console.WriteLine("Invalid option. Please select 1-5.");
+                        Console.WriteLine("Invalid option. Please select 1-6.");
                         break;
                 }
             }
@@ -76,6 +82,67 @@ namespace ResoAPITool
             Console.WriteLine($"\nAuthorization Header Format:");
             Console.WriteLine($"res {auth.UserId}:{auth.Token}");
             Console.WriteLine("\nYou can use this token with other API tools or for debugging purposes.");
+        }
+
+        static async Task EditProfileAsync(AuthResponse auth)
+        {
+            Console.WriteLine("\n=== Edit Profile ===");
+            
+            try
+            {
+                // Get current profile
+                var currentProfile = await ResoniteRecordService.GetUserProfileAsync(auth);
+                
+                if (currentProfile == null)
+                {
+                    Console.WriteLine("Failed to retrieve current profile.");
+                    return;
+                }
+
+                // Display current profile information
+                Console.WriteLine("\nCurrent Profile:");
+                Console.WriteLine($"Tagline: {currentProfile.Tagline ?? "(not set)"}");
+                Console.WriteLine($"Description: {currentProfile.Description ?? "(not set)"}");
+                
+                // Get new values from user
+                Console.WriteLine("\nEnter new values (press Enter to keep current value):");
+                
+                Console.Write($"New tagline [{currentProfile.Tagline ?? ""}]: ");
+                var newTagline = Console.ReadLine()?.Trim();
+                if (!string.IsNullOrEmpty(newTagline))
+                {
+                    currentProfile.Tagline = newTagline;
+                }
+                
+                Console.Write($"New description [{currentProfile.Description ?? ""}]: ");
+                var newDescription = Console.ReadLine()?.Trim();
+                if (!string.IsNullOrEmpty(newDescription))
+                {
+                    currentProfile.Description = newDescription;
+                }
+                
+                // Confirm changes
+                Console.WriteLine("\nProfile changes:");
+                Console.WriteLine($"Tagline: {currentProfile.Tagline ?? "(not set)"}");
+                Console.WriteLine($"Description: {currentProfile.Description ?? "(not set)"}");
+                
+                Console.Write("\nSave these changes? (y/n): ");
+                var confirm = Console.ReadLine()?.Trim().ToLower();
+                
+                if (confirm?.StartsWith("y") == true)
+                {
+                    await ResoniteRecordService.UpdateUserProfileAsync(auth, currentProfile);
+                    Console.WriteLine("✓ Profile updated successfully!");
+                }
+                else
+                {
+                    Console.WriteLine("Profile update cancelled.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error updating profile: {ex.Message}");
+            }
         }
 
         static async Task SearchRecordsAsync(AuthResponse auth)
