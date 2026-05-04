@@ -24,7 +24,7 @@ Current features:
 
 3. **Build the application**
    ```
-   dotnet build
+   dotnet build -c release
    ```
 
 4. **Run the application**
